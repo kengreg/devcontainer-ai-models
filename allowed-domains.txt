@@ -1,0 +1,59 @@
+# Outbound allowlist for the AI agents sandbox.
+#
+# One hostname per line. Comments (#) and blank lines are ignored.
+# Read at container start by init-firewall.sh; everything not listed here (and
+# not in the GitHub ranges it fetches) is rejected.
+#
+# THIS FILE IS BAKED INTO THE IMAGE at build time (Dockerfile -> COPY). Editing
+# it does NOTHING to a container that is already built. To apply an edit:
+#     F1 -> Dev Containers: Rebuild Container      (or: agent.sh rebuild)
+#
+# To unblock a host right now, without a rebuild, from inside the container:
+#     EXTRA_ALLOWED_DOMAINS="a.example.com b.example.com" \
+#       sudo /usr/local/bin/init-firewall.sh
+# That lasts until the container restarts.
+#
+# Note: entries are resolved to IPs at apply time. If a host that used to work
+# starts failing, its IPs rotated - re-run init-firewall.sh.
+
+# --- OpenAI / Codex ---
+api.openai.com
+auth.openai.com
+chatgpt.com
+
+# --- Google / Gemini ---
+generativelanguage.googleapis.com
+cloudcode-pa.googleapis.com
+oauth2.googleapis.com
+accounts.google.com
+www.googleapis.com
+
+# --- Moonshot / Kimi ---
+# .ai = international service, .com = China mainland. Both listed so either
+# login option in the CLI works; drop the half you do not use.
+api.moonshot.ai
+kimi.ai
+www.kimi.ai
+auth.kimi.ai
+api.kimi.ai
+platform.kimi.ai
+code.kimi.ai
+kimi.com
+www.kimi.com
+auth.kimi.com
+api.kimi.com
+platform.kimi.com
+code.kimi.com
+
+# --- Package registries (Django + Node work inside the sandbox) ---
+registry.npmjs.org
+pypi.org
+files.pythonhosted.org
+
+# --- VS Code server, only needed if you attach with VS Code ---
+update.code.visualstudio.com
+marketplace.visualstudio.com
+vscode.blob.core.windows.net
+
+# GitHub is NOT listed by name: init-firewall.sh pulls its official CIDR ranges
+# from https://api.github.com/meta instead. Set INCLUDE_GITHUB_RANGES=0 to skip.

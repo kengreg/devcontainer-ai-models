@@ -1,0 +1,19 @@
+# The build context is this folder. Only Dockerfile, init-firewall.sh,
+# fix-perms.sh and allowed-domains.txt are ever COPYed - everything else is
+# excluded so it cannot end up in an image layer by accident.
+#
+# The .env* rules matter most: secrets must reach the container as runtime
+# environment (see agent.sh), never through the build context or a --build-arg,
+# which would be readable via `docker history`.
+.env
+.env.*
+*.env
+!.env.example
+
+README.md
+agent.sh
+seed-credentials.sh
+devcontainer.json
+
+*.log
+.DS_Store

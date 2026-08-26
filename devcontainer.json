@@ -1,0 +1,103 @@
+{
+  // AI agents sandbox: Codex, Gemini CLI and Kimi Code in one confined container.
+  // Claude Code is not here - it keeps its own container at frontend/.devcontainer.
+  //
+  // Launch with:  ./backend/devcontainer/agent.sh up
+  "name": "AI Agents Sandbox",
+
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".",
+    "args": {
+      "TZ": "${localEnv:TZ:America/Los_Angeles}",
+      "INSTALL_CODEX": "true",
+      "INSTALL_GEMINI": "true",
+      "INSTALL_KIMI": "true",
+      // Pin these instead of "latest" once you want reproducible rebuilds.
+      "CODEX_VERSION": "latest",
+      "GEMINI_VERSION": "latest",
+      "KIMI_VERSION": "latest",
+      "GIT_DELTA_VERSION": "0.18.2",
+      "ZSH_IN_DOCKER_VERSION": "1.2.0"
+    }
+  },
+
+  // NET_ADMIN + NET_RAW are what let init-firewall.sh install iptables rules.
+  // Without them the container starts unconfined and the self-test fails.
+  "runArgs": ["--cap-add=NET_ADMIN", "--cap-add=NET_RAW"],
+
+  // ==========================================================================
+  // FILESYSTEM SCOPE - the "mounts" list below is the entire host filesystem
+  // the agents can see. Nothing is implicit.
+  //
+  // workspaceMount is pinned to an empty named volume on purpose. Left unset,
+  // the Dev Container spec auto-bind-mounts ${localWorkspaceFolder} - the folder
+  // holding this devcontainer/ directory - which would expose .env.agents and
+  // every sibling project at once. An empty volume means /workspace starts bare
+  // and only gains what you list.
+  //
+  // ${localWorkspaceFolder} = the PARENT of the devcontainer/ folder.
+  // Add ",readonly" to anything the agents should read but never modify.
+  // ==========================================================================
+  "workspaceMount": "source=agent-workspace-root,target=/workspace,type=volume",
+  "workspaceFolder": "/workspace",
+
+  "mounts": [
+    // ---------------------------------------------------------------------
+    // PROJECT FOLDERS - one line per folder the agents may see.
+    //
+    // "backend" and "frontend" below are only defaults - the names mean nothing
+    // to the sandbox. Rename them to match your repo, or use one folder or five.
+    //
+    // To add another, copy a line below and replace both occurrences of the
+    // folder name. It must sit directly inside the workspace root (the folder
+    // holding this .devcontainer/). Append ",readonly" for read-only access.
+    // There is no wildcard syntax - each folder is listed deliberately.
+    // ---------------------------------------------------------------------
+    "source=${localWorkspaceFolder}/backend,target=/workspace/backend,type=bind,consistency=cached",
+    "source=${localWorkspaceFolder}/frontend,target=/workspace/frontend,type=bind,consistency=cached",
+
+
+    // --- Credential volumes ---
+    // OAuth tokens live here so logins survive rebuilds. Named volumes, not
+    // bind mounts: nothing lands in the repo and nothing is baked into an image.
+    "source=agent-codex-config,target=/home/node/.codex,type=volume",
+    "source=agent-gemini-config,target=/home/node/.gemini,type=volume",
+    "source=agent-kimi-config,target=/home/node/.kimi-code,type=volume",
+
+    // Shell history across rebuilds
+    "source=agent-commandhistory,target=/commandhistory,type=volume"
+  ],
+
+  "remoteUser": "node",
+
+  "containerEnv": {
+    "TZ": "${localEnv:TZ:America/Los_Angeles}",
+    "NODE_OPTIONS": "--max-old-space-size=4096",
+    "POWERLEVEL9K_DISABLE_GITSTATUS": "true",
+    // Injected at RUN time from the host .env by agent.sh - never --build-arg,
+    // which would bake the value into an image layer readable via docker history.
+    // Empty unless you set them; the primary auth path is OAuth, not keys.
+    "GEMINI_API_KEY": "${localEnv:GEMINI_API_KEY}",
+    "MOONSHOT_API_KEY": "${localEnv:MOONSHOT_API_KEY}"
+  },
+
+  // Hand the credential volumes to the sandbox user, then raise the firewall.
+  // waitFor pins the handover to the firewall step: if init-firewall.sh exits
+  // non-zero you never get a shell in an unconfined container.
+  "postCreateCommand": "sudo /usr/local/bin/fix-perms.sh",
+  "postStartCommand": "sudo /usr/local/bin/init-firewall.sh",
+  "waitFor": "postStartCommand",
+
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "terminal.integrated.profiles.linux": {
+          "zsh": { "path": "zsh" },
+          "bash": { "path": "bash", "icon": "terminal-bash" }
+        }
+      }
+    }
+  }
+}
