@@ -8,7 +8,7 @@
 # resulting token in. Codex and Kimi support device-code login and do not need
 # this, but the same path works for them if you prefer.
 #
-# Usage:  ./seed-credentials.sh <codex|gemini|kimi>
+# Usage:  ./seed-credentials.sh <claude|codex|gemini|kimi>
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -16,9 +16,13 @@ AGENT="${1:-}"
 
 die() { printf '\033[31merror: %s\033[0m\n' "$*" >&2; exit 1; }
 
-[ -n "$AGENT" ] || die "usage: $0 <codex|gemini|kimi>"
+[ -n "$AGENT" ] || die "usage: $0 <claude|codex|gemini|kimi>"
 
 case "$AGENT" in
+    # Claude Code's own OAuth works fine in a container (it prints a URL and
+    # takes a pasted code back), so seeding is only a convenience here. On Linux
+    # and macOS the token lives in .credentials.json next to .claude.json.
+    claude) HOST_SUBDIR=".claude";    TARGET="/home/node/.claude";    FILES=(.credentials.json settings.json) ;;
     codex)  HOST_SUBDIR=".codex";     TARGET="/home/node/.codex";     FILES=(auth.json) ;;
     gemini) HOST_SUBDIR=".gemini";    TARGET="/home/node/.gemini";    FILES=(oauth_creds.json google_accounts.json installation_id) ;;
     kimi)   HOST_SUBDIR=".kimi-code"; TARGET="/home/node/.kimi-code"; FILES=(config.toml auth.json credentials.json) ;;

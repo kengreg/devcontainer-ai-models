@@ -16,6 +16,17 @@
 # Note: entries are resolved to IPs at apply time. If a host that used to work
 # starts failing, its IPs rotated - re-run init-firewall.sh.
 
+# --- Anthropic / Claude Code ---
+# The first four are the official list from
+# anthropics/claude-code/.devcontainer/init-firewall.sh. claude.ai and
+# console.anthropic.com are added on top: the OAuth login flow needs them.
+api.anthropic.com
+statsig.anthropic.com
+statsig.com
+sentry.io
+claude.ai
+console.anthropic.com
+
 # --- OpenAI / Codex ---
 api.openai.com
 auth.openai.com

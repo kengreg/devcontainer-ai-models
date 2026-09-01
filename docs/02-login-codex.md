@@ -45,7 +45,7 @@ Ask it to read a file under `/workspace` to confirm it can see your project.
 Enable device-code auth in your ChatGPT security settings, then retry.
 
 **`fetch failed` naming a host**
-The firewall is blocking it — see [Network allowlist](05-network-allowlist.md).
+The firewall is blocking it — see [Network allowlist](06-network-allowlist.md).
 
 ---
 

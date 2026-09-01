@@ -73,4 +73,4 @@ does not widen filesystem access, which is bounded by the container regardless o
 
 ---
 
-Next: **[Log in to Kimi](04-login-kimi.md)**
+Next: **[Log in to Claude](04-login-claude.md)**

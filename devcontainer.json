@@ -1,6 +1,6 @@
 {
-  // AI agents sandbox: Codex, Gemini CLI and Kimi Code in one confined container.
-  // Claude Code is not here - it keeps its own container at frontend/.devcontainer.
+  // AI agents sandbox: Claude Code, Codex, Gemini CLI and Kimi Code in one
+  // confined container. Pick one by typing its command in the terminal.
   //
   // Launch with:  ./backend/devcontainer/agent.sh up
   "name": "AI Agents Sandbox",
@@ -10,10 +10,12 @@
     "context": ".",
     "args": {
       "TZ": "${localEnv:TZ:America/Los_Angeles}",
+      "INSTALL_CLAUDE": "true",
       "INSTALL_CODEX": "true",
       "INSTALL_GEMINI": "true",
       "INSTALL_KIMI": "true",
       // Pin these instead of "latest" once you want reproducible rebuilds.
+      "CLAUDE_CODE_VERSION": "latest",
       "CODEX_VERSION": "latest",
       "GEMINI_VERSION": "latest",
       "KIMI_VERSION": "latest",
@@ -61,6 +63,7 @@
     // --- Credential volumes ---
     // OAuth tokens live here so logins survive rebuilds. Named volumes, not
     // bind mounts: nothing lands in the repo and nothing is baked into an image.
+    "source=agent-claude-config,target=/home/node/.claude,type=volume",
     "source=agent-codex-config,target=/home/node/.codex,type=volume",
     "source=agent-gemini-config,target=/home/node/.gemini,type=volume",
     "source=agent-kimi-config,target=/home/node/.kimi-code,type=volume",
@@ -75,9 +78,13 @@
     "TZ": "${localEnv:TZ:America/Los_Angeles}",
     "NODE_OPTIONS": "--max-old-space-size=4096",
     "POWERLEVEL9K_DISABLE_GITSTATUS": "true",
+    // Keeps Claude Code's state on the agent-claude-config volume rather than
+    // in the container's ephemeral layer. Same idea as CODEX_HOME.
+    "CLAUDE_CONFIG_DIR": "/home/node/.claude",
     // Injected at RUN time from the host .env by agent.sh - never --build-arg,
     // which would bake the value into an image layer readable via docker history.
     // Empty unless you set them; the primary auth path is OAuth, not keys.
+    "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY}",
     "GEMINI_API_KEY": "${localEnv:GEMINI_API_KEY}",
     "MOONSHOT_API_KEY": "${localEnv:MOONSHOT_API_KEY}"
   },
@@ -91,6 +98,9 @@
 
   "customizations": {
     "vscode": {
+      // The official Anthropic devcontainer ships this one; it gives Claude Code
+      // its IDE integration (diff view, selection context) inside the sandbox.
+      "extensions": ["anthropic.claude-code"],
       "settings": {
         "terminal.integrated.defaultProfile.linux": "zsh",
         "terminal.integrated.profiles.linux": {

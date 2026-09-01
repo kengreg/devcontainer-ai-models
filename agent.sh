@@ -4,17 +4,18 @@
 #
 # Not needed for the normal workflow - in VS Code, use
 #   F1 -> "Dev Containers: Reopen in Container"
-# and then just type codex / gemini / kimi in the terminal.
+# and then just type claude / codex / gemini / kimi in the terminal.
 #
 # This script is for working without VS Code (CI, a plain terminal, scripting).
 # It needs: npm install -g @devcontainers/cli
 #
 #   agent.sh up             build + start + raise firewall
+#   agent.sh claude         run Claude Code inside the sandbox
 #   agent.sh codex          run Codex inside the sandbox
 #   agent.sh gemini         run Gemini CLI
 #   agent.sh kimi           run Kimi Code
 #   agent.sh shell          plain zsh inside the sandbox
-#   agent.sh login codex    device-code OAuth login
+#   agent.sh login claude   browser OAuth login (paste the code back)
 #   agent.sh seed gemini    copy host Google creds in
 #   agent.sh firewall       re-apply the allowlist
 #   agent.sh check          run the isolation self-checks
@@ -74,6 +75,7 @@ load_env() {
     fi
     # Referenced by devcontainer.json via ${localEnv:...}; export empty defaults
     # so the CLI does not warn about unset variables.
+    export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}"
     export GEMINI_API_KEY="${GEMINI_API_KEY:-}"
     export MOONSHOT_API_KEY="${MOONSHOT_API_KEY:-}"
     export TZ="${TZ:-America/Los_Angeles}"
@@ -112,7 +114,7 @@ cmd_up() {
     devcontainer up --workspace-folder "$WORKSPACE_ROOT" --config "$CONFIG" "$@"
     c_grn "sandbox is up and the firewall self-test passed."
     echo
-    echo "Next:  $0 codex   |   $0 gemini   |   $0 kimi   |   $0 shell"
+    echo "Next:  $0 claude  |   $0 codex   |   $0 gemini   |   $0 kimi   |   $0 shell"
 }
 
 cmd_rebuild() {
@@ -155,7 +157,7 @@ cmd_status() {
 cmd_agent() {
     local agent="$1"; shift
     case "$agent" in
-        codex|gemini|kimi) ;;
+        claude|codex|gemini|kimi) ;;
         *) die "unknown agent: $agent" ;;
     esac
     require_running >/dev/null
@@ -166,9 +168,14 @@ cmd_agent() {
 
 cmd_login() {
     local agent="${1:-}"
-    [ -n "$agent" ] || die "usage: $0 login <codex|gemini|kimi>"
+    [ -n "$agent" ] || die "usage: $0 login <claude|codex|gemini|kimi>"
     require_running >/dev/null
     case "$agent" in
+        claude)
+            c_dim "Run /login inside Claude Code. It prints a URL - open it on the HOST,"
+            c_dim "approve, then paste the authorization code back into the terminal."
+            dc_exec claude
+            ;;
         codex)
             c_dim "Device-code login. Approve the code in any browser."
             c_dim "If this errors about device code auth, enable it in your ChatGPT security settings first."
@@ -191,7 +198,7 @@ cmd_login() {
 
 cmd_seed() {
     local agent="${1:-}"
-    [ -n "$agent" ] || die "usage: $0 seed <codex|gemini|kimi>"
+    [ -n "$agent" ] || die "usage: $0 seed <claude|codex|gemini|kimi>"
     require_running >/dev/null
     "${SCRIPT_DIR}/seed-credentials.sh" "$agent"
 }
@@ -220,6 +227,11 @@ cmd_check() {
             && pass "allowlisted host reachable (api.openai.com -> HTTP $code)" \
             || fail "allowlisted host unreachable"
 
+        code=$(curl -sS --connect-timeout 10 -o /dev/null -w "%{http_code}" https://api.anthropic.com/v1/models 2>/dev/null || echo 000)
+        [ "$code" != "000" ] \
+            && pass "allowlisted host reachable (api.anthropic.com -> HTTP $code)" \
+            || fail "allowlisted host unreachable (api.anthropic.com)"
+
         curl -6 -sS --connect-timeout 5 -o /dev/null https://ipv6.google.com 2>/dev/null \
             && fail "IPv6 egress is open" \
             || pass "IPv6 is closed"
@@ -237,10 +249,10 @@ cmd_check() {
 }
 
 cmd_reset_logins() {
-    read -r -p "Delete all stored agent logins (codex, gemini, kimi)? [y/N] " reply
+    read -r -p "Delete all stored agent logins (claude, codex, gemini, kimi)? [y/N] " reply
     [[ "$reply" =~ ^[Yy]$ ]] || { echo "aborted."; return 0; }
     cmd_down || true
-    docker volume rm -f agent-codex-config agent-gemini-config agent-kimi-config >/dev/null 2>&1 || true
+    docker volume rm -f agent-claude-config agent-codex-config agent-gemini-config agent-kimi-config >/dev/null 2>&1 || true
     c_grn "logins wiped. Run '$0 up' and log in again."
 }
 
@@ -254,7 +266,7 @@ case "${1:-}" in
     down)          cmd_down ;;
     status)        cmd_status ;;
     shell)         require_running >/dev/null; dc_exec zsh ;;
-    codex|gemini|kimi) agent="$1"; shift; cmd_agent "$agent" "$@" ;;
+    claude|codex|gemini|kimi) agent="$1"; shift; cmd_agent "$agent" "$@" ;;
     login)         shift; cmd_login "$@" ;;
     seed)          shift; cmd_seed "$@" ;;
     firewall)      cmd_firewall ;;

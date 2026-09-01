@@ -82,6 +82,7 @@ First run builds the image. From then on VS Code offers to reopen automatically.
 Once it opens, use the integrated terminal exactly as you would any other:
 
 ```bash
+claude
 codex
 gemini
 kimi
@@ -106,7 +107,7 @@ A normal rebuild is fine; changing a file invalidates its layer. "Rebuild Withou
 for reinstalling the agent CLIs.
 
 To unblock a host *right now* without a rebuild, see
-[Network allowlist](05-network-allowlist.md).
+[Network allowlist](06-network-allowlist.md).
 
 ---
 

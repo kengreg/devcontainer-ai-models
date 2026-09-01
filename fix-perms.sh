@@ -10,6 +10,7 @@ set -euo pipefail
 USERNAME="${SANDBOX_USER:-node}"
 
 for dir in \
+    "/home/${USERNAME}/.claude" \
     "/home/${USERNAME}/.codex" \
     "/home/${USERNAME}/.gemini" \
     "/home/${USERNAME}/.kimi-code" \

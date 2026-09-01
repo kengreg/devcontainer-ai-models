@@ -1,10 +1,8 @@
 # AI Agents Sandbox
 
-A portable, isolated dev container for running **Codex (OpenAI)**, **Gemini CLI (Google)** and
-**Kimi Code (Moonshot)** against your projects. All three live in one container; you pick which
-one by typing its command in the terminal.
-
-Claude Code is deliberately **not** in this image; it ships its own devcontainer upstream.
+A portable, isolated dev container for running **Claude Code (Anthropic)**, **Codex (OpenAI)**,
+**Gemini CLI (Google)** and **Kimi Code (Moonshot)** against your projects. All four live in one
+container; you pick which one by typing its command in the terminal.
 
 Built from the two vendor reference implementations:
 [`anthropics/claude-code/.devcontainer`](https://github.com/anthropics/claude-code/tree/main/.devcontainer)
@@ -22,9 +20,10 @@ Do them in this order. Step 1 is required; pick whichever agents you want after 
 | 1 | **[Set up in VS Code](docs/01-setup-vscode.md)** | Prerequisites, where the folder goes, choosing what the agents can see, first run |
 | 2 | **[Log in to Codex](docs/02-login-codex.md)** | OpenAI / ChatGPT — **free**, start here |
 | 3 | **[Log in to Gemini](docs/03-login-gemini.md)** | Google — **free**, but in-container OAuth is broken upstream |
-| 4 | **[Log in to Kimi](docs/04-login-kimi.md)** | Moonshot — **paid plan required** |
-| 5 | **[Network allowlist](docs/05-network-allowlist.md)** | When the firewall blocks something you need |
-| 6 | **[Verify the isolation](docs/06-verifying.md)** | Prove each layer actually holds |
+| 4 | **[Log in to Claude](docs/04-login-claude.md)** | Anthropic — **paid**, but the login flow is the smoothest of the four |
+| 5 | **[Log in to Kimi](docs/05-login-kimi.md)** | Moonshot — **paid plan required** |
+| 6 | **[Network allowlist](docs/06-network-allowlist.md)** | When the firewall blocks something you need |
+| 7 | **[Verify the isolation](docs/07-verifying.md)** | Prove each layer actually holds |
 
 ## What each one costs
 
@@ -32,6 +31,7 @@ Do them in this order. Step 1 is required; pick whichever agents you want after 
 |---|---|
 | **Codex** | **Free.** Included in any ChatGPT plan, free tier included |
 | **Gemini** | **Free.** Personal Google account = 1,000 req/day, 60/min. No credit card |
+| **Claude Code** | **Paid.** Claude Pro/Max subscription, or pay-as-you-go API credits |
 | **Kimi Code** | **Paid tiers only** ($19–$199/mo). New subscriptions sold out since July 2026 |
 
 ---
@@ -50,10 +50,10 @@ An agent **cannot flush the firewall that confines it**. (Many devcontainers shi
 
 ### Web search still works
 
-Asking Codex or Gemini to search the web is **not** a firewall leak. The query goes to
-`api.openai.com` / the Gemini API, the *provider's* servers run the search, and the results come
-back over that same allowlisted connection. The container never reaches the wider internet.
-The wall confines the container, not the model's knowledge.
+Asking Claude, Codex or Gemini to search the web is **not** a firewall leak. The query goes to
+`api.anthropic.com` / `api.openai.com` / the Gemini API, the *provider's* servers run the search,
+and the results come back over that same allowlisted connection. The container never reaches the
+wider internet. The wall confines the container, not the model's knowledge.
 
 ---
 
@@ -62,7 +62,7 @@ The wall confines the container, not the model's knowledge.
 | File | Purpose |
 |---|---|
 | `devcontainer.json` | Mounts, capabilities, lifecycle hooks. **The `mounts` list is the sandbox boundary.** |
-| `Dockerfile` | The image: base tooling + the three agent CLIs |
+| `Dockerfile` | The image: base tooling + the four agent CLIs |
 | `allowed-domains.txt` | Outbound hostname allowlist. Baked into the image — edits need a rebuild |
 | `init-firewall.sh` | Default-DROP egress firewall. Runs as root at every container start |
 | `fix-perms.sh` | Hands the credential volumes to the sandbox user. Runs once, at create |
@@ -79,14 +79,14 @@ needed for the IDE workflow. It requires `npm install -g @devcontainers/cli`.
 
 ```bash
 ./.devcontainer/agent.sh up            # build + start + raise firewall
-./.devcontainer/agent.sh codex         # or gemini / kimi / shell
+./.devcontainer/agent.sh claude        # or codex / gemini / kimi / shell
 ./.devcontainer/agent.sh check         # run all isolation self-checks at once
 ./.devcontainer/agent.sh down
 ./.devcontainer/agent.sh --help
 ```
 
 `check` is worth knowing even if you use VS Code — it runs the whole verification table in
-[Verify the isolation](docs/06-verifying.md) in one command.
+[Verify the isolation](docs/07-verifying.md) in one command.
 
 ---
 

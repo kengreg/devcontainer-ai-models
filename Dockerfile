@@ -1,10 +1,8 @@
-# AI agents sandbox image: Codex (OpenAI), Gemini CLI (Google), Kimi Code (Moonshot).
+# AI agents sandbox image: Claude Code (Anthropic), Codex (OpenAI),
+# Gemini CLI (Google), Kimi Code (Moonshot).
 #
-# Claude Code is deliberately NOT installed here - it keeps its own container at
-# frontend/.devcontainer. This image is for everything else.
-#
-# Node 22 is the baseline because Kimi Code requires >= 22.19; Codex and Gemini
-# are both fine on it.
+# Node 22 is the baseline because Kimi Code requires >= 22.19; Claude, Codex and
+# Gemini are all fine on it (Claude Code itself wants >= 18).
 FROM node:22-bookworm-slim
 
 ARG TZ
@@ -70,6 +68,7 @@ ENV DEVCONTAINER=true \
 # rebuilds without ever landing in the repo or in an image layer.
 RUN mkdir -p /workspace \
              /commandhistory \
+             /home/${USERNAME}/.claude \
              /home/${USERNAME}/.codex \
              /home/${USERNAME}/.gemini \
              /home/${USERNAME}/.kimi-code \
@@ -90,7 +89,8 @@ ENV SHELL=/bin/zsh \
 # Tell each CLI where its config lives, so the volume mounts above are the
 # single place credentials are kept.
 ENV CODEX_HOME=/home/${USERNAME}/.codex \
-    KIMI_CODE_HOME=/home/${USERNAME}/.kimi-code
+    KIMI_CODE_HOME=/home/${USERNAME}/.kimi-code \
+    CLAUDE_CONFIG_DIR=/home/${USERNAME}/.claude
 
 USER ${USERNAME}
 
@@ -106,15 +106,18 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
 # Agent CLIs. Each is opt-out via a build arg so the image only carries what you
 # actually use. Versions default to "latest"; pin them for a reproducible image.
 # ---------------------------------------------------------------------------
+ARG INSTALL_CLAUDE=true
 ARG INSTALL_CODEX=true
 ARG INSTALL_GEMINI=true
 ARG INSTALL_KIMI=true
 
+ARG CLAUDE_CODE_VERSION=latest
 ARG CODEX_VERSION=latest
 ARG GEMINI_VERSION=latest
 ARG KIMI_VERSION=latest
 
 RUN set -eux; \
+    if [ "$INSTALL_CLAUDE" = "true" ]; then npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"; fi; \
     if [ "$INSTALL_CODEX"  = "true" ]; then npm install -g "@openai/codex@${CODEX_VERSION}"; fi; \
     if [ "$INSTALL_GEMINI" = "true" ]; then npm install -g "@google/gemini-cli@${GEMINI_VERSION}"; fi; \
     if [ "$INSTALL_KIMI"   = "true" ]; then npm install -g "@moonshot-ai/kimi-code@${KIMI_VERSION}"; fi; \
