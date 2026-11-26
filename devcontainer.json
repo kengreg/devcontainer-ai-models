@@ -59,7 +59,6 @@
     "source=${localWorkspaceFolder}/backend,target=/workspace/backend,type=bind,consistency=cached",
     "source=${localWorkspaceFolder}/frontend,target=/workspace/frontend,type=bind,consistency=cached",
 
-
     // --- Credential volumes ---
     // OAuth tokens live here so logins survive rebuilds. Named volumes, not
     // bind mounts: nothing lands in the repo and nothing is baked into an image.
@@ -86,14 +85,16 @@
     // Empty unless you set them; the primary auth path is OAuth, not keys.
     "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY}",
     "GEMINI_API_KEY": "${localEnv:GEMINI_API_KEY}",
-    "MOONSHOT_API_KEY": "${localEnv:MOONSHOT_API_KEY}"
+    "MOONSHOT_API_KEY": "${localEnv:MOONSHOT_API_KEY}",
+    "DISABLE_ERROR_REPORTING": "1",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
   },
 
   // Hand the credential volumes to the sandbox user, then raise the firewall.
   // waitFor pins the handover to the firewall step: if init-firewall.sh exits
   // non-zero you never get a shell in an unconfined container.
   "postCreateCommand": "sudo /usr/local/bin/fix-perms.sh",
-  "postStartCommand": "sudo /usr/local/bin/init-firewall.sh",
+  "postStartCommand": "sudo /usr/local/bin/init-firewall.sh && (grep -q zshrc.txt ~/.zshrc || { echo; echo '[ -f ${containerWorkspaceFolder}/.devcontainer/.zshrc.txt ] && source ${containerWorkspaceFolder}/.devcontainer/.zshrc.txt'; } >> ~/.zshrc)",
   "waitFor": "postStartCommand",
 
   "customizations": {

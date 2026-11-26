@@ -1,0 +1,19 @@
+export DO_NOT_TRACK=1  #claude code, bun, supabase
+export DISABLE_ERROR_REPORTING=1 #claude code (sentry)
+export GH_TELEMETRY=false # github
+export WRANGLER_SEND_METRICS=false #cloudflare
+export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 #This disables the auto-update so now you need to run claude update manually. also disables the /bug feedback command
+
+export NEXT_TELEMETRY_DISABLED=1
+export ASTRO_TELEMETRY_DISABLED=1
+export VERCEL_TELEMETRY_DISABLED=1
+
+#frontend tools
+export NUXT_TELEMETRY_DISABLED=1 #stops Nuxt from sending anonymous usage data when you run nuxi dev or nuxi build
+export YARN_ENABLE_TELEMETRY=0 #stops newer Yarn versions (2 and up) from sending usage data. The old Yarn 1 doesn't collect any, so this line is harmless if that's the version you have.
+
+#Other tools that can be turn off
+#TURBO_TELEMETRY_DISABLED=1
+#STORYBOOK_DISABLE_TELEMETRY=1
+#NG_CLI_ANALYTICS=false #for angular
+#CHECKPOINT_DISABLE=1 #for prisma
